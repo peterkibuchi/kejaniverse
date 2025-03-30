@@ -56,7 +56,7 @@ export const property = createTable(
     id,
     name: varchar("name", { length: 64 }).notNull(),
     // address: varchar("address", { length: 64 }).notNull(),
-    bankAccountNo: varchar("bank_account_no", { length: 32 }).notNull(),
+    bankAccountNumber: varchar("bank_account_number", { length: 32 }).notNull(),
     createdAt,
 
     ownerId: varchar("owner_id", { length: 32 }).references(
@@ -87,22 +87,26 @@ export const tenant = createTable(
   }),
 );
 
-export const unitTypeEnum = pgEnum("unit_type", [
-  "single_room",
-  "bedsitter",
-  "one_bedroom",
-  "two_bedroom",
-  "three_bedroom",
+export const unitTypeEnum = pgEnum("unit_type_enum", [
+  "Single-room",
+  "Bedsitter",
+  "One-bedroom",
+  "Two-bedroom",
+  "Three-bedroom",
 ]);
+
+export const unitType = createTable("unit_type", {
+  id,
+  unitType: unitTypeEnum("unit_type").notNull(),
+  rentPrice: integer("rent_price").notNull(),
+  propertyId: uuid("property_id").references(() => property.id),
+});
 
 export const unit = createTable("unit", {
   id,
+  unitTypeId: uuid("unit_type_id").references(() => unitType.id),
   unitName: varchar("unit_name", { length: 16 }).notNull(),
-  unitType: unitTypeEnum("unit_type").notNull(),
-  rentPerMonth: integer("rent_per_month").notNull(),
   occupied: boolean("occupied").default(false).notNull(),
-
-  propertyId: uuid("property_id").references(() => property.id),
 });
 
 export const paymentMethodEnum = pgEnum("payment_method", [
