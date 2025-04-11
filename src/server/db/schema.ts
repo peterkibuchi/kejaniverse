@@ -78,8 +78,7 @@ export const tenant = createTable(
       .notNull(),
     moveOutDate: date("move_out_date"),
     cumulativeRentPaid: integer("cumulative_rent_paid").default(0).notNull(),
-
-    unitId: uuid("unit_id").references(() => property.id),
+    unitId: uuid("unit_id").references(() => unit.id),
   },
   (table) => ({
     firstNameIndex: index("tenant_first_name_idx").on(table.firstName),
@@ -107,6 +106,7 @@ export const unit = createTable("unit", {
   unitTypeId: uuid("unit_type_id").references(() => unitType.id),
   unitName: varchar("unit_name", { length: 16 }).notNull(),
   occupied: boolean("occupied").default(false).notNull(),
+  propertyId: uuid("property_id").references(() => property.id),
 });
 
 export const paymentMethodEnum = pgEnum("payment_method", [
