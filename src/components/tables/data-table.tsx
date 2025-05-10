@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -14,6 +14,16 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown } from "lucide-react";
 
+import { DataTableFilterInput } from "~/components/tables/data-table-filter-input";
+import { DataTablePagination } from "~/components/tables/data-table-pagination";
+import {
+  FilterPopover,
+  type FilterPopoverOptions,
+} from "~/components/tables/filter-components/filter-popover";
+import {
+  dateRangeFilterFn,
+  tenantNameFilterFn,
+} from "~/components/tables/table-columns/custom-filters";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -30,11 +40,10 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { camelCaseToSentenceCase } from "~/lib/utils";
-import { DataTableFilterInput } from "./data-table-filter-input";
-import { DataTablePagination } from "./data-table-pagination";
 
-type FilterOption = {
-  columnKey: string;
+type FilterOptions<TData> = {
+  keywordFilterKey: keyof TData & string;
+  popoverFilterOptions?: FilterPopoverOptions<TData>;
 };
 
 interface DataTableProps<TData, TValue> {
@@ -42,14 +51,14 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   // Optional filter option to show a filter input for a specific column
   // If not provided, no filter input will be shown
-  filterOption?: FilterOption;
   showPagination?: boolean;
+  filterOptions?: FilterOptions<TData>;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  filterOption,
+  filterOptions,
   showPagination = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -64,6 +73,10 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    filterFns: {
+      dateRange: dateRangeFilterFn,
+      tenantNameFilter: tenantNameFilterFn,
+    },
     state: {
       sorting,
       columnFilters,
@@ -76,38 +89,47 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center py-4">
-        {filterOption && (
+      <div className="flex flex-wrap items-center justify-between gap-2 py-4">
+        {filterOptions?.keywordFilterKey && (
           <DataTableFilterInput
             table={table}
-            columnKey={filterOption.columnKey}
+            columnKey={filterOptions.keywordFilterKey}
           />
         )}
-        {hideableColumns.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columns <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {hideableColumns.map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {camelCaseToSentenceCase(column.id)}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+
+        <div className="flex items-center space-x-2 justify-self-end">
+          {filterOptions?.popoverFilterOptions && (
+            <FilterPopover
+              table={table}
+              options={filterOptions.popoverFilterOptions}
+            />
+          )}
+          {hideableColumns.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Columns <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {hideableColumns.map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {camelCaseToSentenceCase(column.id)}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       <div className="rounded-md border">
